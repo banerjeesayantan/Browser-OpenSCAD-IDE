@@ -29,8 +29,7 @@
     "tailwindcss": "^4.2.1",
     "three": "^0.183.2",
     "three-csg-ts": "^3.2.0",
-    "three-stdlib": "^2.36.1",
-    "three.js": "^0.77.0"
+    "three-stdlib": "^2.36.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
