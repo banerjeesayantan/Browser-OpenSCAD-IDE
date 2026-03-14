@@ -1,12 +1,14 @@
 <div align="center">
 
+<img src="https://github.com/user-attachments/assets/4c6b46ad-f538-4243-afc2-d550bbfb8fde" alt="Browser OpenSCAD IDE" width="100%"/>
+
 # 🧊 Browser OpenSCAD IDE
 
 ### Write OpenSCAD code → See your 3D model instantly — no installation, no backend, runs 100% in your browser.
 
 <br/>
 
-[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-Vercel-black?style=for-the-badge)](https://browser-open-scad-ide-5fb7-11uclsxsh-banerjeesayantans-projects.vercel.app)
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-Vercel-black?style=for-the-badge)](https://browser-open-scad-ide.vercel.app)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
 [![GSoC](https://img.shields.io/badge/GSoC-2025-orange?style=for-the-badge)](https://summerofcode.withgoogle.com/)
@@ -24,9 +26,10 @@
 
 <div align="center">
 
-![Demo](https://github.com/user-attachments/assets/4c6b46ad-f538-4243-afc2-d550bbfb8fde)
+<!-- Replace with your actual GIF -->
+![Demo](demo/demo.gif)
 
-**👉 [Try the live demo on Vercel](https://browser-open-scad-ide-5fb7-11uclsxsh-banerjeesayantans-projects.vercel.app)**
+**👉 [Try the live demo on Vercel](https://browser-open-scad-ide.vercel.app)**
 
 </div>
 
@@ -36,16 +39,20 @@
 
 <div align="center">
 
-### 🖊️ Editor + 3D Preview
-<img width="1366" height="438" alt="Editor and Preview" src="https://github.com/user-attachments/assets/8b85f54d-83f1-45dc-a1e6-6fead70cea98" />
+### Editor + 3D Preview
+![Editor and Preview](demo/screenshot-editor.png)
 
-### 🔍 Top Section — URL Fetcher + Controls
-<img width="601" height="75" alt="Top Section" src="https://github.com/user-attachments/assets/d1edd334-3c6e-4798-8b34-dcae17defd55" />
+### Colors + CSG Operations
+![Colors and CSG](demo/screenshot-colors.png)
 
-### 🖥️ Terminal — Real-time Logs
-<img width="622" height="207" alt="Terminal" src="https://github.com/user-attachments/assets/42285026-a937-47e8-b78d-2494be33167a" />
+### URL Fetcher — Load from GitHub
+![URL Fetcher](demo/screenshot-url-fetch.png)
+
+### Multi-color Mechanical Assembly
+![Assembly](demo/screenshot-assembly.png)
 
 </div>
+
 ---
 
 ## 📌 Table of Contents
@@ -472,39 +479,39 @@ url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
 ┌─────────────────────────────────────────────────────────────┐
 │                         Browser                             │
 │                                                             │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │                      App.jsx                         │   │
-│  │                                                      │   │
-│  │  State: scadCode, runTrigger, logs, urlInput         │   │
-│  │  Refs:  fetchController, previewObjectRef            │   │
-│  └────────────────┬─────────────────────────────────────┘   │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │                      App.jsx                         │  │
+│  │                                                      │  │
+│  │  State: scadCode, runTrigger, logs, urlInput         │  │
+│  │  Refs:  fetchController, previewObjectRef            │  │
+│  └────────────────┬─────────────────────────────────────┘  │
 │                   │                                         │
-│      ┌────────────┴──────────────┐                          │
-│      ▼                           ▼                          │
-│  ┌──────────────┐    ┌───────────────────────────────┐      │
-│  │  TopSection  │    │         LowerLayer            │      │
-│  │              │    │                               │      │
-│  │  [URL Input] │    │  ┌──────────┬────────────┐    │      │
-│  │  [Run]       │    │  │  Editor  │  Preview   │    │      │
-│  │  [Upload]    │    │  │  Panel   │  Panel     │    │      │
-│  │  [Download]  │    │  └──────────┴────────────┘    │      │
-│  └──────────────┘    │  └─────── Terminal ──────────┘│      │
-│                      └───────────────────────────────┘      │
+│      ┌────────────┴──────────────┐                         │
+│      ▼                           ▼                         │
+│  ┌──────────────┐    ┌───────────────────────────────┐     │
+│  │  TopSection  │    │         LowerLayer             │     │
+│  │              │    │                               │     │
+│  │  [URL Input] │    │  ┌──────────┬────────────┐   │     │
+│  │  [Run]       │    │  │  Editor  │  Preview   │   │     │
+│  │  [Upload]    │    │  │  Panel   │  Panel     │   │     │
+│  │  [Download]  │    │  └──────────┴────────────┘   │     │
+│  └──────────────┘    │  └─────── Terminal ──────────┘     │
+│                      └───────────────────────────────┘     │
 │                                    │                        │
-│                          ┌─────────┘                        │
+│                          ┌─────────┘                       │
 │                          ▼                                  │
-│                   ┌─────────────┐                           │
-│                   │ scadEngine  │                           │
-│                   │    .js      │                           │
-│                   └──────┬──────┘                           │
+│                   ┌─────────────┐                          │
+│                   │ scadEngine  │                          │
+│                   │    .js      │                          │
+│                   └──────┬──────┘                          │
 │                          │                                  │
-│           ┌──────────────┼──────────────┐                   │
+│           ┌──────────────┼──────────────┐                  │
 │           ▼              ▼              ▼                   │
-│    ┌────────────┐  ┌──────────┐  ┌──────────┐               │
-│    │scadParser  │  │three-csg │  │ Three.js │               │
-│    │  .js       │  │   -ts    │  │  Scene   │               │
-│    │(SCAD→AST)  │  │  (CSG)   │  │          │               │
-│    └────────────┘  └──────────┘  └──────────┘               │
+│    ┌────────────┐  ┌──────────┐  ┌──────────┐             │
+│    │scadParser  │  │three-csg │  │ Three.js │             │
+│    │  .js       │  │   -ts    │  │  Scene   │             │
+│    │(SCAD→AST)  │  │  (CSG)   │  │          │             │
+│    └────────────┘  └──────────┘  └──────────┘             │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -618,7 +625,7 @@ Build the best browser-based OpenSCAD IDE — fast, accurate, open source, and a
 ### The Story
 OpenSCAD is loved by the maker community for parametric 3D design — but its desktop-only nature creates massive friction. Students, beginners, and casual users give up before they start because of the installation barrier.
 
-This project started as a GSoC 2025 proof-of-concept to show that a browser-based OpenSCAD IDE is not just possible — it can be fast, accurate, and beautiful.
+This project started as a GSoC 2026 proof-of-concept to show that a browser-based OpenSCAD IDE is not just possible — it can be fast, accurate, and beautiful.
 
 ### Who Is It For?
 - 🎓 **Students** learning parametric 3D modeling
@@ -735,7 +742,7 @@ by [Sayantan Banerjee](https://github.com/banerjeesayantan)
 
 <br/>
 
-⭐ **Star this repo if you found it useful. It helps the project grow!**
+⭐ **Star this repo if you found it useful — it helps the project grow!**
 
 <br/>
 
