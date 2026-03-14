@@ -4,7 +4,7 @@ import Search from "../ui/Search";
 import RunButton from "../ui/runButton";
 import FileDownload from "../ui/fileDownload";
 
-const TopSection = ({ urlInput, setUrlInput, onRun, onLoadFile, onDownload }) => {
+const TopSection = ({ urlInput, setUrlInput, onRun, isLoading, onLoadFile, onDownload }) => {
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
@@ -20,7 +20,7 @@ const TopSection = ({ urlInput, setUrlInput, onRun, onLoadFile, onDownload }) =>
       {/* Left: Search + Run + Upload */}
       <div className="flex items-center gap-2">
         <Search urlInput={urlInput} setUrlInput={setUrlInput} onRun={onRun} />
-        <RunButton onRun={onRun} />
+        <RunButton onRun={onRun} isLoading={isLoading} />
 
         <input
           type="file"
@@ -47,3 +47,13 @@ const TopSection = ({ urlInput, setUrlInput, onRun, onLoadFile, onDownload }) =>
 };
 
 export default TopSection;
+
+
+
+
+
+
+
+
+
+

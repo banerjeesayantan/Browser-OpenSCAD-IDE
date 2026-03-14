@@ -30,6 +30,7 @@ function App() {
   const [urlInput,   setUrlInput]    = useState("");
   const [lastUrl,    setLastUrl]     = useState("");
   const [logs,       setLogs]        = useState([]);
+  const [isLoading,  setIsLoading]   = useState(false);          // FIX 1: loading state
   // If code was saved, start at 1 so preview auto-renders on load
   const [runTrigger, setRunTrigger]  = useState(savedCode.trim() ? 1 : 0);
 
@@ -76,6 +77,8 @@ function App() {
   // HANDLE RUN
   // ─────────────────────────────────────────────────────────
   const handleRun = useCallback(async () => {
+    if (isLoading) return;           // FIX 1: prevent double-click
+    setIsLoading(true);              // FIX 1: start loading
     addLog("info", "▶ Run triggered");
 
     if (fetchController.current) fetchController.current.abort();
@@ -86,11 +89,23 @@ function App() {
 
       // Fetch from URL whenever a URL is present — always fetch on Run
       if (urlInput?.trim()) {
-        addLog("info", `Fetching: ${urlInput.trim()}`);
+
+        // Auto-convert GitHub blob URL → raw URL
+        let resolvedUrl = urlInput.trim();
+        // Strip line anchors like #L5 or #L5-L10
+        resolvedUrl = resolvedUrl.split("#")[0];
+        if (resolvedUrl.includes("github.com") && resolvedUrl.includes("/blob/")) {
+          resolvedUrl = resolvedUrl
+            .replace("github.com", "raw.githubusercontent.com")
+            .replace("/blob/", "/");
+          addLog("info", `Auto-converted to raw URL`);
+        }
+
+        addLog("info", `Fetching: ${resolvedUrl}`);
 
         // Try direct fetch first, fall back to CORS proxy if blocked
         let codeText = null;
-        const directUrl = urlInput.trim();
+        const directUrl = resolvedUrl;
         const proxyUrl  = `https://corsproxy.io/?${encodeURIComponent(directUrl)}`;
 
         for (const url of [directUrl, proxyUrl]) {
@@ -110,6 +125,13 @@ function App() {
         }
 
         if (!codeText) throw new Error("Could not fetch file — check the URL and try again");
+
+        // FIX 2: Validate — reject HTML pages or non-SCAD content
+        const trimmed = codeText.trim();
+        const looksLikeHtml = trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html");
+        const looksLikeScad = /\b(cube|sphere|cylinder|translate|rotate|union|difference|module|color|linear_extrude)\b/.test(trimmed);
+        if (looksLikeHtml) throw new Error("URL returned an HTML page — use the raw file URL");
+        if (!looksLikeScad) addLog("warning", "File loaded but may not be valid SCAD — check the editor");
 
         codeToRender = codeText;
         setScadCode(codeToRender);   // show fetched code in editor
@@ -132,8 +154,10 @@ function App() {
       }
       addLog("error", `Run failed: ${err.message}`);
       console.error("[App.handleRun]", err);
+    } finally {
+      setIsLoading(false);           // FIX 1: always reset loading
     }
-  }, [scadCode, urlInput, lastUrl, addLog, setScadCode]);
+  }, [isLoading, scadCode, urlInput, lastUrl, addLog, setScadCode]);
 
   // ─────────────────────────────────────────────────────────
   // LOAD LOCAL FILE
@@ -206,6 +230,7 @@ function App() {
             urlInput={urlInput}
             setUrlInput={setUrlInput}
             onRun={handleRun}
+            isLoading={isLoading}
             onLoadFile={loadFromFile}
             onDownload={handleDownload}
           />
@@ -239,5 +264,3 @@ function App() {
 }
 
 export default App;
-
-
