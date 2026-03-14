@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="demo/banner.png" alt="Browser OpenSCAD IDE" width="100%"/>
-
 # 🧊 Browser OpenSCAD IDE
 
 ### Write OpenSCAD code → See your 3D model instantly — no installation, no backend, runs 100% in your browser.
@@ -16,7 +14,7 @@
 
 <br/>
 
-> **Built as a GSoC 2025 proof-of-concept** — A fully client-side OpenSCAD IDE that converts SCAD code into interactive 3D models using Three.js, with zero backend required.
+> **Built as a GSoC 2026 proof-of-concept** — A fully client-side OpenSCAD IDE that converts SCAD code into interactive 3D models using Three.js, with zero backend required.
 
 </div>
 
@@ -26,8 +24,7 @@
 
 <div align="center">
 
-<!-- Replace with your actual GIF -->
-![Demo](demo/demo.gif)
+![Demo](https://github.com/user-attachments/assets/4c6b46ad-f538-4243-afc2-d550bbfb8fde)
 
 **👉 [Try the live demo on Vercel](https://browser-open-scad-ide-5fb7-11uclsxsh-banerjeesayantans-projects.vercel.app)**
 
@@ -39,20 +36,16 @@
 
 <div align="center">
 
-### Editor + 3D Preview
-![Editor and Preview](demo/screenshot-editor.png)
+### 🖊️ Editor + 3D Preview
+<img width="1366" height="438" alt="Editor and Preview" src="https://github.com/user-attachments/assets/8b85f54d-83f1-45dc-a1e6-6fead70cea98" />
 
-### Colors + CSG Operations
-![Colors and CSG](demo/screenshot-colors.png)
+### 🔍 Top Section — URL Fetcher + Controls
+<img width="601" height="75" alt="Top Section" src="https://github.com/user-attachments/assets/d1edd334-3c6e-4798-8b34-dcae17defd55" />
 
-### URL Fetcher — Load from GitHub
-![URL Fetcher](demo/screenshot-url-fetch.png)
-
-### Multi-color Mechanical Assembly
-![Assembly](demo/screenshot-assembly.png)
+### 🖥️ Terminal — Real-time Logs
+<img width="622" height="207" alt="Terminal" src="https://github.com/user-attachments/assets/42285026-a937-47e8-b78d-2494be33167a" />
 
 </div>
-
 ---
 
 ## 📌 Table of Contents
