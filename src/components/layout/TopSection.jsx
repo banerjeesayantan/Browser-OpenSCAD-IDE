@@ -2,7 +2,7 @@
 import React, { useRef } from "react";
 import Search from "../ui/Search";
 import RunButton from "../ui/RunButton";
-import FileDownload from "../ui/fileDownload";
+import FileDownload from "../ui/FileDownload";
 
 const TopSection = ({ urlInput, setUrlInput, onRun, isLoading, onLoadFile, onDownload }) => {
   const fileInputRef = useRef(null);
