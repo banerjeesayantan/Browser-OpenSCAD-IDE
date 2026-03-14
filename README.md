@@ -1,22 +1,20 @@
 <div align="center">
 
-<img src="https://github.com/user-attachments/assets/4c6b46ad-f538-4243-afc2-d550bbfb8fde" alt="Browser OpenSCAD IDE" width="100%"/>
-
 # 🧊 Browser OpenSCAD IDE
 
-### Write OpenSCAD code → See your 3D model instantly — no installation, no backend, runs 100% in your browser.
+### Write OpenSCAD code → See your 3D model instantly : no installation, no backend, runs 100% in your browser.
 
 <br/>
 
 [![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-Vercel-black?style=for-the-badge)](https://browser-open-scad-ide.vercel.app)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
-[![GSoC](https://img.shields.io/badge/GSoC-2025-orange?style=for-the-badge)](https://summerofcode.withgoogle.com/)
+[![GSoC](https://img.shields.io/badge/GSoC-2026-orange?style=for-the-badge)](https://summerofcode.withgoogle.com/)
 [![Made With](https://img.shields.io/badge/Made%20With-React%20%2B%20Three.js-61DAFB?style=for-the-badge)](https://threejs.org/)
 
 <br/>
 
-> **Built as a GSoC 2026 proof-of-concept** — A fully client-side OpenSCAD IDE that converts SCAD code into interactive 3D models using Three.js, with zero backend required.
+> **Built as a GSoC 2026 proof-of-concept** A fully client-side OpenSCAD IDE that converts SCAD code into interactive 3D models using Three.js, with zero backend required.
 
 </div>
 
@@ -26,8 +24,7 @@
 
 <div align="center">
 
-<!-- Replace with your actual GIF -->
-![Demo](demo/demo.gif)
+![Demo](https://github.com/user-attachments/assets/4c6b46ad-f538-4243-afc2-d550bbfb8fde)
 
 **👉 [Try the live demo on Vercel](https://browser-open-scad-ide.vercel.app)**
 
@@ -39,17 +36,14 @@
 
 <div align="center">
 
-### Editor + 3D Preview
-![Editor and Preview](demo/screenshot-editor.png)
+### 🖊️ Editor + 3D Preview
+<img width="1366" height="438" alt="Editor and Preview" src="https://github.com/user-attachments/assets/8b85f54d-83f1-45dc-a1e6-6fead70cea98" />
 
-### Colors + CSG Operations
-![Colors and CSG](demo/screenshot-colors.png)
+### 🔍 Top Section — URL Fetcher + Controls
+<img width="601" height="75" alt="Top Section" src="https://github.com/user-attachments/assets/d1edd334-3c6e-4798-8b34-dcae17defd55" />
 
-### URL Fetcher — Load from GitHub
-![URL Fetcher](demo/screenshot-url-fetch.png)
-
-### Multi-color Mechanical Assembly
-![Assembly](demo/screenshot-assembly.png)
+### 🖥️ Terminal — Real-time Logs
+<img width="622" height="207" alt="Terminal" src="https://github.com/user-attachments/assets/42285026-a937-47e8-b78d-2494be33167a" />
 
 </div>
 
@@ -450,23 +444,16 @@ OpenSCAD uses **Z-up** coordinates. Three.js uses **Y-up**. The engine fixes thi
 rootGroup.rotation.x = -Math.PI / 2; // rotate entire scene Z-up → Y-up
 ```
 
-Cylinder geometry is also rotated to align with the Z-axis:
-```javascript
-geometry.rotateX(Math.PI / 2); // CylinderGeometry grows along Y → rotate to Z
-```
-
 ### Step 5 — URL Fetcher with CORS Proxy
 
 ```javascript
+// Auto-convert GitHub blob URL to raw URL
+url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+
 // Try direct fetch first
 const res = await fetch(directUrl);
 // If blocked → auto-retry via CORS proxy
 const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(directUrl)}`);
-```
-
-GitHub blob URLs are auto-converted:
-```javascript
-url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
 ```
 
 ---
@@ -479,40 +466,35 @@ url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
 ┌─────────────────────────────────────────────────────────────┐
 │                         Browser                             │
 │                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │                      App.jsx                         │  │
-│  │                                                      │  │
-│  │  State: scadCode, runTrigger, logs, urlInput         │  │
-│  │  Refs:  fetchController, previewObjectRef            │  │
-│  └────────────────┬─────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │                      App.jsx                         │   │
+│  │  State: scadCode, runTrigger, logs, urlInput         │   │
+│  │  Refs:  fetchController, previewObjectRef            │   │
+│  └────────────────┬─────────────────────────────────────┘   │
 │                   │                                         │
-│      ┌────────────┴──────────────┐                         │
-│      ▼                           ▼                         │
-│  ┌──────────────┐    ┌───────────────────────────────┐     │
-│  │  TopSection  │    │         LowerLayer             │     │
-│  │              │    │                               │     │
-│  │  [URL Input] │    │  ┌──────────┬────────────┐   │     │
-│  │  [Run]       │    │  │  Editor  │  Preview   │   │     │
-│  │  [Upload]    │    │  │  Panel   │  Panel     │   │     │
-│  │  [Download]  │    │  └──────────┴────────────┘   │     │
-│  └──────────────┘    │  └─────── Terminal ──────────┘     │
-│                      └───────────────────────────────┘     │
+│      ┌────────────┴──────────────┐                          │
+│      ▼                           ▼                          │
+│  ┌──────────────┐    ┌───────────────────────────────┐      │
+│  │  TopSection  │    │         LowerLayer            │      │
+│  │  [URL Input] │    │  ┌──────────┬────────────┐   │       │
+│  │  [Run]       │    │  │  Editor  │  Preview   │   │       │
+│  │  [Upload]    │    │  │  Panel   │  Panel     │   │       │
+│  │  [Download]  │    │  └──────────┴────────────┘   │       │
+│  └──────────────┘    │  └─────── Terminal ──────────┘│      │
+│                      └───────────────────────────────┘      │
 │                                    │                        │
-│                          ┌─────────┘                       │
+│                          ┌─────────┘                        │
 │                          ▼                                  │
-│                   ┌─────────────┐                          │
-│                   │ scadEngine  │                          │
-│                   │    .js      │                          │
-│                   └──────┬──────┘                          │
+│                   ┌─────────────┐                           │
+│                   │ scadEngine  │                           │
+│                   └──────┬──────┘                           │
 │                          │                                  │
-│           ┌──────────────┼──────────────┐                  │
+│           ┌──────────────┼──────────────┐                   │
 │           ▼              ▼              ▼                   │
-│    ┌────────────┐  ┌──────────┐  ┌──────────┐             │
-│    │scadParser  │  │three-csg │  │ Three.js │             │
-│    │  .js       │  │   -ts    │  │  Scene   │             │
-│    │(SCAD→AST)  │  │  (CSG)   │  │          │             │
-│    └────────────┘  └──────────┘  └──────────┘             │
-│                                                             │
+│    ┌────────────┐  ┌──────────┐  ┌──────────┐               │
+│    │scadParser  │  │three-csg │  │ Three.js │               │
+│    │(SCAD→AST)  │  │  (CSG)   │  │  Scene   │               │
+│    └────────────┘  └──────────┘  └──────────┘               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -569,13 +551,10 @@ Browser-OpenSCAD-IDE/
 │   │   ├── layout/
 │   │   │   ├── TopSection.jsx           ← Header: URL bar, Run, Upload, Download
 │   │   │   └── LowerLayer.jsx           ← Resizable panel layout
-│   │   │
 │   │   ├── editor/
 │   │   │   └── EditorPanel.jsx          ← Monaco editor + SCAD syntax theme
-│   │   │
 │   │   ├── preview/
 │   │   │   └── PreviewPanel.jsx         ← Three.js scene, camera, controls
-│   │   │
 │   │   └── terminal/
 │   │       └── TerminalPanel.jsx        ← Log output panel
 │   │
@@ -586,31 +565,23 @@ Browser-OpenSCAD-IDE/
 │       ├── scadParser.js               ← SCAD text → AST parser
 │       └── stlExport.js                ← Three.js mesh → STL file
 │
-├── demo/
-│   ├── demo.gif                        ← Animated demo (embed in README)
-│   ├── screenshot-editor.png
-│   ├── screenshot-colors.png
-│   ├── screenshot-url-fetch.png
-│   └── screenshot-assembly.png
-│
-├── index.html                          ← HTML entry point
-├── vite.config.js                      ← Vite build config
-├── package.json                        ← Dependencies
-├── README.md                           ← This file
-└── LICENSE                             ← MIT
+├── index.html
+├── vite.config.js
+├── package.json
+├── README.md
+└── LICENSE
 ```
 
 ### Key Dependencies
 
-| Package | Version | Purpose |
-|---|---|---|
-| `react` | 18+ | UI framework |
-| `three` | latest | 3D rendering engine |
-| `three-csg-ts` | latest | CSG boolean operations |
-| `@monaco-editor/react` | latest | Code editor |
-| `react-resizable` | latest | Resizable panels |
-| `@vitejs/plugin-react` | latest | Vite + React |
-| `tailwindcss` | latest | Styling |
+| Package | Purpose |
+|---|---|
+| `react` | UI framework |
+| `three` | 3D rendering engine |
+| `three-csg-ts` | CSG boolean operations |
+| `@monaco-editor/react` | Code editor |
+| `react-resizable` | Resizable panels |
+| `tailwindcss` | Styling |
 
 ---
 
@@ -648,40 +619,32 @@ This project started as a GSoC 2026 proof-of-concept to show that a browser-base
 - Terminal with real-time logs
 
 ### 🔄 Phase 2 — Full SCAD Language Support
-- `for` loops — `for (i = [0:10]) translate([i*5, 0, 0]) cube(4);`
-- `module` definitions — reusable components
-- `function` definitions — parametric math
+- `for` loops
+- `module` and `function` definitions
 - `if` / `else` conditionals
 - `hull()` and `minkowski()` operations
 - `echo()` → terminal output
-- Better error messages with line numbers
 
 ### 🔄 Phase 3 — Backend Integration
 - Node.js server running real OpenSCAD binary
 - POST `/render` → returns STL with 100% SCAD accuracy
-- Browser IDE stays client-side for editing
-- Backend only called for final render
 - Docker container for easy self-hosting
 
 ### 🔄 Phase 4 — Collaboration & Sharing
-- Share models via URL (code encoded in URL hash)
-- Real-time collaborative editing (WebSockets)
+- Share models via URL hash
+- Real-time collaborative editing
 - Public model gallery
-- Fork and remix models
 
 ### 🔄 Phase 5 — Ecosystem
-- VS Code extension with live preview panel
+- VS Code extension with live preview
 - CLI tool for headless rendering
 - npm package: `import { ParseSCAD } from 'scad-browser'`
-- Mobile-responsive design
 
 ---
 
 ## 🤝 Contributing
 
 Contributions are very welcome! Here's how to get started:
-
-### Setup
 
 ```bash
 # Fork the repo on GitHub, then:
@@ -702,26 +665,9 @@ npm run dev
 | 🐛 Bugs | Fix issues from the Issues tab |
 | ✅ Tests | Add unit tests for parser and engine |
 
-### Contribution Flow
-
-```bash
-# Create a feature branch
-git checkout -b feat/add-for-loops
-
-# Make your changes
-# Test with: npm run dev
-
-# Commit with clear message
-git commit -m "feat: add for loop support in parser"
-
-# Push and open a Pull Request
-git push origin feat/add-for-loops
-```
-
 ### Good First Issues
 - Add `hull()` visual fallback
 - Improve error messages with line numbers
-- Add more CSS color names to color parser
 - Add `echo()` → terminal output support
 
 ---
