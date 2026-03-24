@@ -11,10 +11,11 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
 [![GSoC](https://img.shields.io/badge/GSoC-2026-orange?style=for-the-badge)](https://summerofcode.withgoogle.com/)
 [![Made With](https://img.shields.io/badge/Made%20With-React%20%2B%20Three.js-61DAFB?style=for-the-badge)](https://threejs.org/)
+[![WASM](https://img.shields.io/badge/Engine-OpenSCAD%20WASM-blue?style=for-the-badge)](https://github.com/openscad/openscad-wasm)
 
 <br/>
 
-> **Built as a GSoC 2026 proof-of-concept** A fully client-side OpenSCAD IDE that converts SCAD code into interactive 3D models using Three.js, with zero backend required.
+> **Built as a GSoC 2026 proof-of-concept** A fully client-side OpenSCAD IDE that converts SCAD code into interactive 3D models using the real OpenSCAD WASM engine + Three.js, with zero backend required.
 
 </div>
 
@@ -71,12 +72,12 @@
 **Browser OpenSCAD IDE** is a fully client-side web application that lets you:
 
 - ✍️ Write [OpenSCAD](https://openscad.org/) code in a professional Monaco editor
-- 🎯 Press **Run** and see your 3D model rendered instantly using [Three.js](https://threejs.org/)
+- 🎯 Press **Run** and see your 3D model rendered instantly using the real OpenSCAD WASM engine
 - 🌐 Fetch any `.scad` file from a GitHub URL — it auto-loads and renders
 - 📁 Upload local `.scad` files directly
 - 💾 Export your model as an `.stl` file for 3D printing
 
-**No installation. No backend. No OpenSCAD binary required.**
+**No installation. No backend. Powered by real OpenSCAD WASM engine.**
 
 Just open the URL and start designing. Everything runs entirely in your browser.
 
@@ -92,7 +93,7 @@ OpenSCAD is a powerful parametric 3D modeling tool — but it has a major fricti
 | No online editor with real 3D preview | Full Monaco editor + Three.js 3D renderer |
 | Sharing models requires file transfers | Paste any GitHub URL → instant render |
 | High learning curve with slow feedback | Write code → see result in milliseconds |
-| CSG operations need native binary | Implemented via `three-csg-ts` in browser |
+| CSG operations need native binary | Real OpenSCAD WASM engine runs in browser |
 | Colors lost in boolean operations | Per-mesh color preservation in difference() |
 | CORS blocks external file fetches | Automatic CORS proxy fallback built-in |
 
@@ -109,7 +110,8 @@ OpenSCAD is a powerful parametric 3D modeling tool — but it has a major fricti
 - **Paste / Copy / Clear** buttons in header
 
 ### 🎯 3D Preview
-- **Real-time Three.js rendering** — interactive 3D scene
+- **Real OpenSCAD WASM rendering** — 100% accurate, same as desktop OpenSCAD ⭐
+- **Fallback Three.js rendering** — if WASM unavailable, custom engine kicks in ⭐
 - **Orbit Controls** — rotate, zoom, pan with mouse
 - **Axis Helper** — X/Y/Z orientation lines always visible
 - **Grid** — ground plane reference
@@ -363,11 +365,29 @@ npx netlify deploy --prod --dir=dist
 
 ### The Core Problem
 
-OpenSCAD is a compiled language — normally it requires a native binary to convert code into geometry. This project reimplements the core language in JavaScript, running entirely in the browser.
+OpenSCAD is a compiled language — normally it requires a native binary to convert code into geometry. This project now runs the **real OpenSCAD engine** compiled to WebAssembly, directly in the browser — with a custom JS fallback engine for reliability.
 
-### Step 1 — Parsing (`scadParser.js`)
+### Step 1 — WASM Engine (`openscadWasm.js`) ⭐ New
 
-The parser converts raw SCAD text into an **Abstract Syntax Tree (AST)**:
+The primary rendering path uses the real OpenSCAD engine:
+
+```
+SCAD code
+    ↓
+openscadWasm.js
+    ↓ writes to virtual filesystem
+OpenSCAD WASM (real engine)
+    ↓ generates
+STL bytes (Uint8Array)
+    ↓
+stlLoader.js
+    ↓ parses binary STL
+THREE.Mesh ✅
+```
+
+### Step 2 — Fallback Parser (`scadParser.js`)
+
+If WASM is unavailable, the custom parser converts raw SCAD text into an **Abstract Syntax Tree (AST)**:
 
 ```
 Input:  "translate([0,0,10]) color("red") cylinder(h=20, r=5);"
@@ -389,16 +409,9 @@ Output: {
 }
 ```
 
-Key parser capabilities:
-- **Recursive descent** — handles arbitrarily deep nesting
-- **Variable resolution** — `x = 10; cube([x, x, x])` evaluates correctly
-- **Expression evaluator** — `translate([10+5, 20/2, 0])` computes at parse time
-- **`$fn` propagation** — global segment count inherited by all children
-- **Named + positional parameters** — both `cylinder(10, 5)` and `cylinder(h=10, r=5)` work
+### Step 3 — Fallback Engine (`scadEngine.js`)
 
-### Step 2 — Engine (`scadEngine.js`)
-
-The engine walks the AST and builds a Three.js scene graph:
+The fallback engine walks the AST and builds a Three.js scene graph:
 
 ```
 executeNode(node, inheritedColor)
@@ -417,7 +430,7 @@ executeNode(node, inheritedColor)
     └── "rotate_extrude"→ THREE.LatheGeometry
 ```
 
-### Step 3 — CSG Color Preservation (Hardest Problem)
+### Step 4 — CSG Color Preservation (Hardest Problem)
 
 **The problem:** Standard CSG merges all base meshes into one → loses per-mesh colors.
 
@@ -436,7 +449,7 @@ for (const baseMesh of collectMeshes(children[0])) {
 }
 ```
 
-### Step 4 — Coordinate System
+### Step 5 — Coordinate System
 
 OpenSCAD uses **Z-up** coordinates. Three.js uses **Y-up**. The engine fixes this:
 
@@ -444,7 +457,7 @@ OpenSCAD uses **Z-up** coordinates. Three.js uses **Y-up**. The engine fixes thi
 rootGroup.rotation.x = -Math.PI / 2; // rotate entire scene Z-up → Y-up
 ```
 
-### Step 5 — URL Fetcher with CORS Proxy
+### Step 6 — URL Fetcher with CORS Proxy
 
 ```javascript
 // Auto-convert GitHub blob URL to raw URL
@@ -485,17 +498,52 @@ const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(directUrl)}`
 │                                    │                        │
 │                          ┌─────────┘                        │
 │                          ▼                                  │
+│              ┌───────────────────────┐                      │
+│              │     PreviewPanel      │                      │
+│              │  ┌─────────────────┐  │                      │
+│              │  │  PRIMARY ENGINE  │  │                      │
+│              │  │ openscadWasm.js  │  │                      │
+│              │  │  stlLoader.js   │  │                      │
+│              │  └────────┬────────┘  │                      │
+│              │    if fails↓          │                      │
+│              │  ┌─────────────────┐  │                      │
+│              │  │ FALLBACK ENGINE  │  │                      │
+│              │  │  scadParser.js  │  │                      │
+│              │  │  scadEngine.js  │  │                      │
+│              │  └────────┬────────┘  │                      │
+│              └───────────┼───────────┘                      │
+│                          ▼                                  │
 │                   ┌─────────────┐                           │
-│                   │ scadEngine  │                           │
-│                   └──────┬──────┘                           │
-│                          │                                  │
-│           ┌──────────────┼──────────────┐                   │
-│           ▼              ▼              ▼                   │
-│    ┌────────────┐  ┌──────────┐  ┌──────────┐               │
-│    │scadParser  │  │three-csg │  │ Three.js │               │
-│    │(SCAD→AST)  │  │  (CSG)   │  │  Scene   │               │
-│    └────────────┘  └──────────┘  └──────────┘               │
+│                   │  Three.js   │                           │
+│                   │   Scene     │                           │
+│                   └─────────────┘                           │
 └─────────────────────────────────────────────────────────────┘
+```
+
+### 🚀 Dual-Engine Rendering System
+
+```
+SCAD code
+   ↓
+PreviewPanel.jsx
+   ↓
+ ┌──────────────────────────────┐
+ │ PRIMARY ENGINE               │
+ │ openscadWasm.js              │
+ │        ↓                     │
+ │ STL bytes (Uint8Array)       │
+ │        ↓                     │
+ │ stlLoader.js                 │
+ │        ↓                     │
+ │ THREE.Mesh ✅                │
+ └──────────────────────────────┘
+          ↓ if WASM fails
+ ┌──────────────────────────────┐
+ │ FALLBACK ENGINE              │
+ │ scadParser + scadEngine      │
+ │        ↓                     │
+ │ THREE.Mesh ✅                │
+ └──────────────────────────────┘
 ```
 
 ### Data Flow
@@ -525,13 +573,20 @@ App.handleRun()
 setRunTrigger++ ──→ PreviewPanel useEffect fires
         │
         ▼
+TRY openscadWasm.renderScad(code) ──→ STL bytes
+        │                                  │
+        │                            stlLoader.stlBytesToMesh()
+        │                                  │
+        │                            THREE.Mesh ✅
+        │
+CATCH (fallback)
+        │
 scadParser.ParseSCAD(code) ──→ AST []
         │
-        ▼
 scadEngine.executeNode(node) ──→ THREE.Group
         │
         ▼
-scene.add(rootGroup) ──→ Three.js renders 3D ✅
+scene.add(rootObject) ──→ Three.js renders 3D ✅
         │
         ▼
 onObjectReady(obj) ──→ previewObjectRef (used for STL export)
@@ -554,15 +609,19 @@ Browser-OpenSCAD-IDE/
 │   │   ├── editor/
 │   │   │   └── EditorPanel.jsx          ← Monaco editor + SCAD syntax theme
 │   │   ├── preview/
-│   │   │   └── PreviewPanel.jsx         ← Three.js scene, camera, controls
+│   │   │   └── PreviewPanel.jsx         ← Three.js scene, dual-engine orchestrator
 │   │   └── terminal/
 │   │       └── TerminalPanel.jsx        ← Log output panel
 │   │
 │   ├── engine/
-│   │   └── scadEngine.js               ← AST → Three.js geometry converter
+│   │   ├── scadEngine.js               ← AST → Three.js geometry (fallback)
+│   │   └── openscadWasm.js             ← Real OpenSCAD WASM engine (primary) ⭐ NEW
+│   │
+│   ├── loaders/
+│   │   └── stlLoader.js                ← STL bytes → THREE.Mesh converter ⭐ NEW
 │   │
 │   └── utils/
-│       ├── scadParser.js               ← SCAD text → AST parser
+│       ├── scadParser.js               ← SCAD text → AST parser (fallback)
 │       └── stlExport.js                ← Three.js mesh → STL file
 │
 ├── index.html
@@ -582,6 +641,7 @@ Browser-OpenSCAD-IDE/
 | `@monaco-editor/react` | Code editor |
 | `react-resizable` | Resizable panels |
 | `tailwindcss` | Styling |
+| `openscad-wasm` | Real OpenSCAD engine in browser ⭐ NEW |
 
 ---
 
@@ -617,6 +677,8 @@ This project started as a GSoC 2026 proof-of-concept to show that a browser-base
 - STL export
 - Resizable panels with ResizeObserver
 - Terminal with real-time logs
+- ✅ **Real OpenSCAD WASM engine integrated** — 100% accurate rendering
+- ✅ **Dual-engine system** — WASM primary + custom fallback
 
 ### 🔄 Phase 2 — Full SCAD Language Support
 - `for` loops
@@ -625,10 +687,11 @@ This project started as a GSoC 2026 proof-of-concept to show that a browser-base
 - `hull()` and `minkowski()` operations
 - `echo()` → terminal output
 
-### 🔄 Phase 3 — Backend Integration
-- Node.js server running real OpenSCAD binary
-- POST `/render` → returns STL with 100% SCAD accuracy
-- Docker container for easy self-hosting
+### 🔄 Phase 3 — Embeddable npm/CDN Package
+- Package as minimal TypeScript npm component
+- Single `<script>` tag embed for any website
+- Integration example for openscad.org website
+- Plug-and-play API
 
 ### 🔄 Phase 4 — Collaboration & Sharing
 - Share models via URL hash
@@ -674,9 +737,9 @@ npm run dev
 
 ## 📄 License
 
-MIT License — see [LICENSE](LICENSE) for full details.
+GPL-2.0 License — see [LICENSE](LICENSE) for full details.
 
-Free to use, modify, and distribute. Attribution appreciated. 🙏
+Free to use, modify, and distribute under the same licence. Attribution required. 🙏
 
 ---
 
