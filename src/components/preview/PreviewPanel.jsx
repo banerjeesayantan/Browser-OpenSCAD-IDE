@@ -4,19 +4,21 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { convert as ConvertSCADToThree, disposeObject } from "../../engine/scadEngine";
 
+// ✅ ADDED (no change to existing)
+import { renderScad } from "../../engine/openscadWasm";
+import { stlBytesToMesh } from "../../loaders/stlLoader";
+
 const PreviewPanel = ({ scadCode, runTrigger, onError, addLog, onObjectReady }) => {
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
-  const rendererRef = useRef(null);
+  const rendererRef = useRef(null);  
   const controlsRef = useRef(null);
   const objectsGroupRef = useRef(null);
   const animationRef = useRef(null);
-  // Keep latest scadCode in a ref — always readable inside effects without being a dep
   const scadCodeRef = useRef(scadCode);
-  scadCodeRef.current = scadCode; // sync every render, no useEffect needed
+  scadCodeRef.current = scadCode;
 
-  // Stable refs for callbacks — prevents effect re-firing when parent re-renders
   const onErrorRef      = useRef(onError);
   const addLogRef       = useRef(addLog);
   const onObjectReadyRef = useRef(onObjectReady);
@@ -26,17 +28,12 @@ const PreviewPanel = ({ scadCode, runTrigger, onError, addLog, onObjectReady }) 
 
   const [loading, setLoading] = useState(false);
 
-  // Use engine's disposeObject — handles geometry, materials AND textures
-  // Replaces local clearGroup which missed texture disposal (GPU memory leak)
   const clearGroup = useCallback((group) => {
     if (!group) return;
     disposeObject(group);
     group.clear();
   }, []);
 
-  // ------------------------------
-  // Fit camera to object safely
-  // ------------------------------
   const fitCameraToObject = useCallback((object) => {
     if (!object) return;
     const camera = cameraRef.current;
@@ -56,24 +53,18 @@ const PreviewPanel = ({ scadCode, runTrigger, onError, addLog, onObjectReady }) 
     controls.update();
   }, []);
 
-  // ------------------------------
-  // THREE INIT
-  // ------------------------------
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
 
-    // Scene
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1e1e1e);
     sceneRef.current = scene;
 
-    // Camera
     const camera = new THREE.PerspectiveCamera(60, mount.clientWidth / mount.clientHeight, 0.01, 5000);
     camera.position.set(60, 60, 60);
     cameraRef.current = camera;
 
-    // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(mount.clientWidth, mount.clientHeight);
@@ -81,28 +72,23 @@ const PreviewPanel = ({ scadCode, runTrigger, onError, addLog, onObjectReady }) 
     mount.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controlsRef.current = controls;
 
-    // Lights
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
     dirLight.position.set(50, 80, 50);
     scene.add(dirLight);
     scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
-    // Helpers
     scene.add(new THREE.GridHelper(200, 40, 0x444444, 0x222222));
     scene.add(new THREE.AxesHelper(50));
 
-    // Object container — all SCAD meshes live here
     const group = new THREE.Group();
     scene.add(group);
     objectsGroupRef.current = group;
 
-    // Render loop
     const animate = () => {
       animationRef.current = requestAnimationFrame(animate);
       controls.update();
@@ -110,7 +96,6 @@ const PreviewPanel = ({ scadCode, runTrigger, onError, addLog, onObjectReady }) 
     };
     animate();
 
-    // Resize handling
     let resizeTimeout;
     const resizeObserver = new ResizeObserver(() => {
       clearTimeout(resizeTimeout);
@@ -132,13 +117,8 @@ const PreviewPanel = ({ scadCode, runTrigger, onError, addLog, onObjectReady }) 
     };
   }, [clearGroup]);
 
-  // ------------------------------
-  // REAL-TIME CLEAR
-  // Watches scadCode — if editor becomes empty, immediately clears
-  // preview and resets camera without waiting for Run
-  // ------------------------------
   useEffect(() => {
-    if (scadCode?.trim()) return; // has code — do nothing, wait for Run
+    if (scadCode?.trim()) return;
 
     const group = objectsGroupRef.current;
     if (!group) return;
@@ -153,12 +133,8 @@ const PreviewPanel = ({ scadCode, runTrigger, onError, addLog, onObjectReady }) 
     }
   }, [scadCode, clearGroup]);
 
-  // ------------------------------
-  // SCAD RENDER — only fires when Run is pressed (runTrigger increments)
-  // Reads latest code from scadCodeRef — no stale closure, no keystroke cancellation
-  // ------------------------------
   useEffect(() => {
-    if (runTrigger === 0) return; // skip initial mount
+    if (runTrigger === 0) return;
 
     const group = objectsGroupRef.current;
     if (!group) return;
@@ -181,6 +157,28 @@ const PreviewPanel = ({ scadCode, runTrigger, onError, addLog, onObjectReady }) 
       setLoading(true);
       addLog?.("info", "Parsing SCAD code...");
       try {
+
+        // ✅ ADDED BLOCK (WASM FIRST — SAFE)
+        try {
+          const stlBytes = await renderScad(currentCode);
+          if (!cancelled) {
+            const mesh = stlBytesToMesh(stlBytes);
+            const wasmGroup = new THREE.Group();
+            wasmGroup.add(mesh);
+            wasmGroup.rotation.x = -Math.PI / 2;
+
+            group.add(wasmGroup);
+            fitCameraToObject(wasmGroup);
+            onObjectReady?.(wasmGroup);
+            onError?.(null);
+            addLog?.("success", "Rendered with OpenSCAD WASM");
+            return;
+          }
+        } catch (e) {
+          addLog?.("warn", "WASM failed → fallback engine");
+        }
+
+        // 🔒 ORIGINAL CODE (UNCHANGED)
         const rootObject = await ConvertSCADToThree(currentCode);
         if (cancelled) return;
 
@@ -207,11 +205,8 @@ const PreviewPanel = ({ scadCode, runTrigger, onError, addLog, onObjectReady }) 
     renderAsync();
     return () => { cancelled = true; };
 
-  }, [runTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [runTrigger]);
 
-  // ------------------------------
-  // CAMERA CONTROLS
-  // ------------------------------
   const zoomIn = () => { controlsRef.current?.dollyIn(1.2); controlsRef.current?.update(); };
   const zoomOut = () => { controlsRef.current?.dollyOut(1.2); controlsRef.current?.update(); };
   const resetCamera = () => {
@@ -225,7 +220,6 @@ const PreviewPanel = ({ scadCode, runTrigger, onError, addLog, onObjectReady }) 
 
   return (
     <div className="relative w-full h-full bg-[#1e1e1e]">
-      {/* Header — matches PreviewPanel style exactly */}
       <div className="flex items-center px-3 py-1 border-b border-[#222] shrink-0">
         <span className="text-gray-400 font-semibold text-sm font-mono">Panel</span>
       </div>

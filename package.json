@@ -20,6 +20,7 @@
     "color-name": "^2.1.0",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.575.0",
+    "openscad-wasm": "^0.0.4",
     "radix-ui": "^1.4.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
